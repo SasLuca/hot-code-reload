@@ -141,13 +141,19 @@ typedef struct input_t
     key_t keys[KEYCODE_MENU + 1];
 } input_t;
 
-// The game program must define these functions and global variables
-extern void game_init(rf_gfx_backend_init_data*);
-extern void game_update(const input_t* input);
-extern void game_window_resize(int, int);
+typedef struct context_t
+{
+    int screen_width;
+    int screen_height;
+    const char* window_title;
 
-extern int screen_width;
-extern int screen_height;
-extern const char* window_title;
+    rf_context ctx;
+    rf_render_batch batch;
+
+    int reload_count;
+
+    void* memory;
+    int memory_size;
+} context_t;
 
 #endif // PLATFORM_H

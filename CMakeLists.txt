@@ -11,10 +11,10 @@ target_include_directories(glad PUBLIC libs)
 add_subdirectory(libs/rayfork)
 
 # Setup game layer
-add_library(game source/game.c)
+add_library(game SHARED source/game.c)
 target_link_libraries(game rayfork)
 
 # Setup platform layer
 add_executable(platform source/main.c)
-target_link_libraries(platform PRIVATE game glad)
+target_link_libraries(platform PRIVATE glad)
 target_include_directories(platform PRIVATE libs/rayfork libs/sokol)

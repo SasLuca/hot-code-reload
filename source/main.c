@@ -7,12 +7,32 @@
 #include "platform.h"
 
 static input_t input_state;
+static context_t ctx;
+static HMODULE game_code;
+
+void (*game_init)(context_t* ctx_ptr, rf_gfx_backend_init_data* gfx_data);
+void (*game_update)(const input_t* input);
+void (*game_window_resize)(int, int);
 
 static void sokol_on_init(void)
 {
     gladLoadGL();
 
-    game_init(RF_DEFAULT_GFX_BACKEND_INIT_DATA);
+    CopyFile("libgame.dll", "game.dll", FALSE);
+    game_code = LoadLibraryA("game.dll");
+
+    game_init          = GetProcAddress(game_code, "game_init");
+    game_update        = GetProcAddress(game_code, "game_update");
+    game_window_resize = GetProcAddress(game_code, "game_window_resize");
+
+    ctx.memory_size = 1024*1024*30;
+    ctx.memory = malloc(ctx.memory_size);
+
+    ctx.screen_width  = 800;
+    ctx.screen_height = 450;
+    ctx.window_title  = "rayfork template";
+
+    game_init(&ctx, RF_DEFAULT_GFX_BACKEND_INIT_DATA);
 }
 
 static void sokol_on_frame(void)
@@ -53,6 +73,20 @@ static void sokol_on_event(const sapp_event* event)
             break;
 
         case SAPP_EVENTTYPE_KEY_UP:
+            if (event->key_code == SAPP_KEYCODE_R)
+            {
+                FreeLibrary(game_code);
+
+                CopyFile("libgame.dll", "game.dll", FALSE);
+                game_code = LoadLibraryA("game.dll");
+
+                game_init          = GetProcAddress(game_code, "game_init");
+                game_update        = GetProcAddress(game_code, "game_update");
+                game_window_resize = GetProcAddress(game_code, "game_window_resize");
+
+                game_init(&ctx, NULL);
+            }
+
             input_state.keys[event->key_code] = KEY_RELEASE;
             break;
 
@@ -65,8 +99,8 @@ sapp_desc sokol_main(int argc, char** argv)
 {
     return (sapp_desc)
     {
-        .width    = screen_width,
-        .height   = screen_height,
+        .width    = 800,
+        .height   = 450,
         .init_cb  = sokol_on_init,
         .frame_cb = sokol_on_frame,
         .event_cb = sokol_on_event,
